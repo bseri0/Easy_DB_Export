@@ -1,0 +1,72 @@
+import csv
+import os
+from os import getenv
+import pyodbc
+import sys
+import time
+
+
+class Logger(object):
+    def __init__(self, filename="Refresh_log.txt"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "w", encoding="utf-8")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        # This flush method is needed for Python 3 compatibility.
+        # This handles the flush command by doing nothing.
+        pass
+log_file_path = os.path.join(os.getcwd(), "Refresh_log.txt")
+sys.stdout = Logger("C:\\\\Users\\user\\Desktop\\Refresh_log.txt")
+
+
+print("Imported Modules and running Refresh script..", time.ctime())
+
+#pyodbc
+SERVER = 'P0006'
+DATABASE = ''
+USERNAME = ''
+PASSWORD = ''
+
+connectionString = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD}'
+
+try:
+    connect = pyodbc.connect(connectionString)
+except pyodbc.Error as e:
+    # Confirm unsuccessful connection and stop program execution.
+    print("Database connection unsuccessful.")
+    quit()
+
+# Cursor to execute query.
+cursor = connect.cursor()
+
+sql = """
+SELECT  *
+  FROM [DB].[SCHEMA].[table] 
+  where more_business_logic = 'good job'
+
+  """
+
+cursor.execute(sql)
+
+rows = cursor.fetchall()
+columns = [column[0] for column in cursor.description]
+
+csv_file_path = "C:\\\\Users\\user\\Desktop\\export.csv"
+
+with open(csv_file_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(columns)
+    writer.writerows(rows)
+
+cursor.close()
+connect.close()
+print(f"Data exported successfully to: {csv_file_path}")
+
+  
+
+print("Closed DB connection for sql queries and finished CSV Refresh script..", time.ctime())
+
